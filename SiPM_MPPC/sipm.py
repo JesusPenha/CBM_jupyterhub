@@ -326,21 +326,56 @@ def Ring_generator(Nr, Nc, r, M, Np_ring, N_rings):
                 
     return Ring_array
 
-def Camera_plot(signal, noise, M, Nr, Nc):
-    Event =  noise
 
-    plt.figure(figsize=(25, 7))
-    plt.imshow(Event, cmap='Blues', origin='lower')
+def Shower_generator(Nr, Nc, M, Np_shower, cov):
+    
+    Shower_array = np.zeros((Nc*M,Nr*M))
+    
+    x0 = int(np.random.uniform(0, Nc*M))
+    y0 = int(np.random.uniform(0, Nr*M))
+    
+    pts = np.random.multivariate_normal([x0, y0], cov, Np_shower)
+    
+    for i in range(Np_shower):
+    
+            a = int(pts[i, 0])
+            b = int(pts[i, 1])
+    
+            if a >= 0 and b >=0 and a < Nc*M and b < Nr*M: # boundary conditions
+                Shower_array[a,b]= Shower_array[a,b] + 1
+                
+    return Shower_array
+    
+
+def Camera_plot(signal, noise, M, Nr, Nc, cmap='viridis', lc='w'):
+    Event =  signal.T + noise
+    
+    plt.imshow(Event, cmap=cmap)
     
     for i in range(Nc):
-        plt.axvline((i+1)*M, color='k', lw=0.5, ls='dotted')
+            plt.axvline((i)*M-0.5, color=lc, lw=0.5, ls='dotted')
     for i in range(Nr):
-        plt.axhline((i+1)*M, color='k', lw=0.5, ls='dotted')
+            plt.axhline((i)*M-0.5, color=lc, lw=0.5, ls='dotted')
     
     plt.xticks([])
     plt.yticks([])
-    plt.axis([0,Nc*M,0,Nr*M])
     
-    cbar = plt.colorbar(norm=matplotlib.colors.LogNorm())
-    cbar.ax.tick_params(labelsize=15)
-    cbar.set_label(label="pe", size=20)
+    plt.colorbar(label='Photoelectrons')
+
+def voting_trigger(signal, noise, M, Nr, Nc, L0_threshold, cmap='viridis'):
+
+    Event =  signal.T + noise
+
+    L0_trigger = np.zeros((Nr, Nc))
+    
+    for i in range(Nr):
+        for j in range(Nc):
+            if np.sum(Event[i*M:i*M+M,j*M:j*M+M]) > L0_threshold:
+                L0_trigger[i,j] = 1
+
+    plt.imshow(L0_trigger, cmap=cmap)
+    plt.title("L0 trigger", fontsize=15)
+    plt.xticks([])
+    plt.yticks([])
+
+    return L0_trigger
